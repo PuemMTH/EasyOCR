@@ -45,7 +45,8 @@ def train(opt, show_number = 2, amp=False):
     valid_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=min(32, opt.batch_size),
         shuffle=True,  # 'True' to check training progress with validation function.
-        num_workers=int(opt.workers), prefetch_factor=512,
+        num_workers=int(opt.workers), 
+        prefetch_factor=512 if int(opt.workers) > 0 else None,
         collate_fn=AlignCollate_valid, pin_memory=True)
     log.write(valid_dataset_log)
     print('-' * 80)
