@@ -1,3 +1,7 @@
+# Custom model
+trainer/all_data/easy_ocr/
+trainer/all_data/results_JS-Kobori
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
