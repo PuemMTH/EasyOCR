@@ -17,8 +17,8 @@ def get_config(file_path):
     return opt
 
 if __name__ == '__main__':
-    print("Loading config from: config_files/thai_model_config.yaml")
-    opt = get_config("config_files/thai_model_config.yaml")
+    print("Loading config from: config_files/thai_auto_config.yaml")
+    opt = get_config("config_files/thai_auto_config.yaml")
     print(f"Starting training: {opt.experiment_name}")
     print(f"Character set size: {len(opt.character)}")
     

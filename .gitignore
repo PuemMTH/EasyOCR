@@ -111,3 +111,5 @@ ENV/
 .vscode/
 .vs/
 .idea/
+trainer/all_data/thai_train
+trainer/saved_models/thai_auto

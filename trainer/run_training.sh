@@ -14,6 +14,19 @@ if [ ! -f "pipeline.py" ]; then
     exit 1
 fi
 
+echo "📦 Installing required packages..."
+echo "Installing PyTorch and related packages..."
+uv add torch torchvision torchaudio
+
+echo "Installing computer vision and image processing packages..."
+uv add opencv-python scikit-image imgaug scipy matplotlib
+
+echo "Installing utility packages..."
+uv add easydict pyyaml lmdb nltk natsort fire pandas
+
+echo "✅ All packages installed successfully!"
+echo ""
+
 # ตรวจสอบข้อมูล
 if [ ! -d "all_data/results_JS-Kobori" ]; then
     echo "❌ ไม่พบข้อมูล: all_data/results_JS-Kobori/"
