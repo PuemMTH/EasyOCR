@@ -46,6 +46,8 @@ class EasyOCRPipeline:
         
         # สร้างโฟลเดอร์
         self.train_dir.mkdir(parents=True, exist_ok=True)
+        val_dir = Path("all_data/thai_val")
+        val_dir.mkdir(parents=True, exist_ok=True)
         
         # อ่าน gt.txt
         gt_file = self.data_dir / "gt.txt"
@@ -62,26 +64,57 @@ class EasyOCRPipeline:
                         filename = os.path.basename(image_path)
                         labels_data.append([filename, text])
         
-        # สร้าง labels.csv
-        labels_csv = self.train_dir / 'labels.csv'
-        with open(labels_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        # แยกข้อมูล train/val (80:20)
+        import random
+        random.seed(42)  # เพื่อให้ผลลัพธ์เหมือนเดิมทุกครั้ง
+        random.shuffle(labels_data)
+        
+        split_idx = int(len(labels_data) * 0.8)
+        train_data = labels_data[:split_idx]
+        val_data = labels_data[split_idx:]
+        
+        # สร้าง labels.csv สำหรับ train
+        train_csv = self.train_dir / 'labels.csv'
+        with open(train_csv, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['filename', 'words'])
-            writer.writerows(labels_data)
+            writer.writerows(train_data)
+        
+        # สร้าง labels.csv สำหรับ val
+        val_csv = val_dir / 'labels.csv'
+        with open(val_csv, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['filename', 'words'])
+            writer.writerows(val_data)
         
         # คัดลอกรูปภาพ
         source_images_dir = self.data_dir / "images" / "0"
         if source_images_dir.exists():
-            copied_count = 0
+            # สร้าง set ของ filenames สำหรับ train และ val
+            train_files = {item[0] for item in train_data}
+            val_files = {item[0] for item in val_data}
+            
+            train_copied = 0
+            val_copied = 0
+            
             for filename in os.listdir(source_images_dir):
                 if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
                     source_path = source_images_dir / filename
-                    target_path = self.train_dir / filename
-                    shutil.copy2(source_path, target_path)
-                    copied_count += 1
-            print(f"✅ คัดลอกรูป: {copied_count} ไฟล์")
+                    
+                    if filename in train_files:
+                        target_path = self.train_dir / filename
+                        shutil.copy2(source_path, target_path)
+                        train_copied += 1
+                    elif filename in val_files:
+                        target_path = val_dir / filename
+                        shutil.copy2(source_path, target_path)
+                        val_copied += 1
+            
+            print(f"✅ คัดลอกรูป Train: {train_copied} ไฟล์")
+            print(f"✅ คัดลอกรูป Val: {val_copied} ไฟล์")
         
-        print(f"✅ สร้าง labels.csv: {len(labels_data)} แถว")
+        print(f"✅ สร้าง Train labels: {len(train_data)} แถว")
+        print(f"✅ สร้าง Val labels: {len(val_data)} แถว")
         return labels_data
     
     def step3_analyze_parameters(self, labels_data):
@@ -118,7 +151,7 @@ symbol: "!\\"#$%&'()*+,-./:;<=>?@[\\\\]^_`{{|}}~ €"
 lang_char: '{params['lang_char']}'
 experiment_name: '{self.model_name}'
 train_data: 'all_data'
-valid_data: 'all_data/thai_train'
+valid_data: 'all_data'
 manualSeed: 1111
 workers: 0
 batch_size: 8
@@ -132,8 +165,8 @@ beta1: 0.9
 rho: 0.95
 eps: 0.00000001
 grad_clip: 5
-select_data: 'thai_train'
-batch_ratio: '1'
+select_data: 'thai_train-thai_val'
+batch_ratio: '0.8-0.2'
 total_data_usage_ratio: 1.0
 batch_max_length: {params['batch_max_length']}
 imgH: 64

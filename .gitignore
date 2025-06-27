@@ -113,3 +113,4 @@ ENV/
 .idea/
 trainer/all_data/thai_train
 trainer/saved_models/thai_auto
+trainer/all_data/

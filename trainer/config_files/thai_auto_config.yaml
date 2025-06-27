@@ -4,7 +4,7 @@ symbol: "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ €"
 lang_char: 'กขคงจชซญณดตถทธนบปผฝพฟมยรลวศสหอะัาำิีึืุูเแโใไ็่้'
 experiment_name: 'thai_auto'
 train_data: 'all_data'
-valid_data: 'all_data/thai_train'
+valid_data: 'all_data/thai_val'
 manualSeed: 1111
 workers: 0
 batch_size: 8
