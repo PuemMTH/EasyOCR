@@ -20,20 +20,20 @@ help:
 .PHONY: sync
 sync:
 	@echo "Syncing $(PROJECT_NAME) to $(REMOTE_HOST):$(REMOTE_PATH)..."
-	rsync -avz --exclude-from=.rsync-exclude $(LOCAL_PATH)/$(PROJECT_NAME) $(REMOTE_HOST):$(REMOTE_PATH)
+	rsync -rvz --exclude-from=.rsync-exclude $(LOCAL_PATH)/$(PROJECT_NAME) $(REMOTE_HOST):$(REMOTE_PATH)
 	@echo "Sync completed!"
 
 # Dry run sync
 .PHONY: sync-dry
 sync-dry:
 	@echo "Dry run sync to $(REMOTE_HOST):$(REMOTE_PATH)..."
-	rsync -avz --dry-run --exclude-from=.rsync-exclude $(LOCAL_PATH)/$(PROJECT_NAME) $(REMOTE_HOST):$(REMOTE_PATH)
+	rsync -rvz --dry-run --exclude-from=.rsync-exclude $(LOCAL_PATH)/$(PROJECT_NAME) $(REMOTE_HOST):$(REMOTE_PATH)
 
 # Fast sync (skip checksum verification)
 .PHONY: sync-fast
 sync-fast:
 	@echo "Fast syncing $(PROJECT_NAME) to $(REMOTE_HOST):$(REMOTE_PATH)..."
-	rsync -avz --size-only --exclude-from=.rsync-exclude $(LOCAL_PATH)/$(PROJECT_NAME) $(REMOTE_HOST):$(REMOTE_PATH)
+	rsync -rvz --size-only --exclude-from=.rsync-exclude $(LOCAL_PATH)/$(PROJECT_NAME) $(REMOTE_HOST):$(REMOTE_PATH)
 	@echo "Fast sync completed!"
 
 # Clean local temporary files

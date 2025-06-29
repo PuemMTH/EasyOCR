@@ -58,7 +58,7 @@ training.log
 # saved_models/
 
 # Data files (ถ้าไม่ต้องการ sync)
-# all_data/
+all_data/
 # data/
 
 # Temporary files
