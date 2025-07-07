@@ -3,7 +3,7 @@ symbol: "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ €"
 lang_char: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZกขคฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮฤเแโใไะาุูิีืึั่้๊๋็์ำํฺฯๆ๑๒๓๔๕๖๗๘๙'
 
 # 'กขคฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮฤาเแโใไะฯๆ'   
-experiment_name: 'th_filtered_all_freeze_split_0.9_aug'
+experiment_name: 'th_filtered_2gpus'
 train_data: 'all_data/thai_easyocr_format'
 valid_data: 'all_data/thai_easyocr_format/val'
 manualSeed: 1111
