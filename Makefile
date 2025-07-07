@@ -14,6 +14,7 @@ help:
 	@echo "  sync-dry    - Dry run sync (show what would be transferred)"
 	@echo "  sync-fast   - Fast sync (skip checksum verification)"
 	@echo "  clean       - Clean local cache and temporary files"
+	@echo "  pull        - Pull latest changes from remote server"
 	@echo "  help        - Show this help message"
 
 # Sync to remote server
@@ -57,3 +58,9 @@ ssh:
 ssh-project:
 	@echo "Connecting to $(REMOTE_HOST) and navigating to project..."
 	ssh -t $(REMOTE_HOST) "cd $(REMOTE_PATH)/$(PROJECT_NAME) && bash"
+
+# Pull latest changes from remote ssh using rsync
+.PHONY: pull
+pull:
+	@echo "Pulling latest changes from remote ssh..."
+	rsync -rvz --exclude-from=.rsync-exclude $(REMOTE_HOST):$(REMOTE_PATH)/$(PROJECT_NAME) $(LOCAL_PATH)/$(PROJECT_NAME)

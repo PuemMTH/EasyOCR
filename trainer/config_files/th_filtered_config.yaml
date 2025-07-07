@@ -8,9 +8,9 @@ train_data: 'all_data/thai_easyocr_format'
 valid_data: 'all_data/thai_easyocr_format/val'
 manualSeed: 1111
 workers: 4
-batch_size: 256
-num_iter: 1000
-valInterval: 50
+batch_size: 32
+num_iter: 20000
+valInterval: 1000
 saved_model: 'saved_models/thai_g1.pth' #'saved_models/en_filtered/iter_300000.pth'
 FT: True # Fine-tuning
 optim: 'adam' # default is Adadelta
