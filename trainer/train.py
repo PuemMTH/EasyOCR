@@ -10,6 +10,7 @@ import torch.optim as optim
 import torch.utils.data
 from torch.cuda.amp import autocast, GradScaler
 import numpy as np
+import csv  # เพิ่ม import csv
 
 from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
@@ -165,6 +166,17 @@ def train(opt, show_number = 2, amp=False):
         except:
             pass
 
+    # สร้างไฟล์ CSV และเขียน header
+    csv_path = f'./saved_models/{opt.experiment_name}/training_log.csv'
+    csv_exists = os.path.exists(csv_path)
+    csv_file = open(csv_path, 'a', newline='', encoding='utf-8')
+    csv_writer = csv.writer(csv_file)
+    
+    # เขียน header ถ้าเป็นไฟล์ใหม่
+    if not csv_exists or start_iter == 0:
+        csv_writer.writerow(['iteration', 'epoch', 'train_loss', 'valid_loss', 'accuracy', 'norm_ED', 
+                           'best_accuracy', 'best_norm_ED', 'elapsed_time', 'learning_rate'])
+    
     start_time = time.time()
     best_accuracy = -1
     best_norm_ED = -1
@@ -236,6 +248,28 @@ def train(opt, show_number = 2, amp=False):
 
                 # training loss and validation loss
                 loss_log = f'[{i}/{opt.num_iter}] Train loss: {loss_avg.val():0.5f}, Valid loss: {valid_loss:0.5f}, Elapsed_time: {elapsed_time:0.5f}'
+                
+                # คำนวณ epoch (สมมติว่า 1 epoch = จำนวน iteration ที่ใช้ไปทั้งหมดของ dataset)
+                epoch = i // len(train_dataset) if hasattr(train_dataset, '__len__') else i // 1000
+                
+                # ดึง learning rate ปัจจุบัน
+                current_lr = optimizer.param_groups[0]['lr']
+                
+                # บันทึกข้อมูลลง CSV
+                csv_writer.writerow([
+                    i,  # iteration
+                    epoch,  # epoch
+                    f'{loss_avg.val():.5f}',  # train_loss
+                    f'{valid_loss:.5f}',  # valid_loss
+                    f'{current_accuracy:.3f}',  # accuracy
+                    f'{current_norm_ED:.4f}',  # norm_ED
+                    f'{best_accuracy:.3f}',  # best_accuracy
+                    f'{best_norm_ED:.4f}',  # best_norm_ED
+                    f'{elapsed_time:.2f}',  # elapsed_time
+                    f'{current_lr:.6f}'  # learning_rate
+                ])
+                csv_file.flush()  # ทำให้แน่ใจว่าข้อมูลถูกเขียนลงไฟล์ทันที
+                
                 loss_avg.reset()
 
                 current_model_log = f'{"Current_accuracy":17s}: {current_accuracy:0.3f}, {"Current_norm_ED":17s}: {current_norm_ED:0.4f}'
@@ -279,5 +313,6 @@ def train(opt, show_number = 2, amp=False):
 
         if i == opt.num_iter:
             print('end the training')
+            csv_file.close()  # ปิดไฟล์ CSV ก่อนจบโปรแกรม
             sys.exit()
         i += 1
