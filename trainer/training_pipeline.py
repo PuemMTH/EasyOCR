@@ -15,9 +15,6 @@ from rich.console import Console
 
 app = typer.Typer()
 
-def long_time_process():
-    time.sleep(20)
-
 def get_gpu_info():
     """Get NVIDIA GPU information using nvidia-smi"""
     try:
@@ -132,24 +129,6 @@ def monitor_performance(output_dir: str, interval: int = 5):
         print(f"Error during monitoring: {e}")
 
 @app.command()
-def perfomance_load(
-        output_path: str = typer.Option(..., "--output", "-o", help="The name of the output."),
-    ):
-    """
-    Run the performance load.
-    """
-    start_time = time.time()
-    typer.echo("Running performance load...")
-    long_time_process()
-    end_time = time.time()
-    typer.echo(f"Time taken: {end_time - start_time} seconds")
-    output_dir = os.path.join(".", output_path)
-    os.makedirs(output_dir, exist_ok=True)
-    with open(os.path.join(output_dir, "output.txt"), "w") as f:
-        f.write(f"Time taken: {end_time - start_time} seconds")
-    typer.echo(f"Output saved to {output_dir}")
-
-@app.command()
 def monitor(
     output_dir: str = typer.Option("performance_logs", "--output-dir", "-o", help="Output directory for CSV files"),
     interval: int = typer.Option(1, "--interval", "-i", help="Monitoring interval in seconds"),
@@ -201,14 +180,14 @@ def training(
     cudnn.benchmark = True
     cudnn.deterministic = False
 
-    def get_config(file_path):
+    def get_config(file_path, experiment_name, training_data):
         with open(file_path, 'r', encoding="utf8") as stream:
             opt = yaml.safe_load(stream)
         opt = AttrDict(opt)
         if opt.lang_char == 'None':
             characters = ''
             for data in opt['select_data'].split('-'):
-                csv_path = os.path.join(opt['train_data'], data, 'labels.csv')
+                csv_path = os.path.join(training_data, data, 'labels.csv')
                 df = pd.read_csv(csv_path, sep='^([^,]+),', engine='python', usecols=['filename', 'words'], keep_default_na=False)
                 all_char = ''.join(df['words'])
                 characters += ''.join(set(all_char))
@@ -216,10 +195,10 @@ def training(
             opt.character= ''.join(characters)
         else:
             opt.character = opt.number + opt.symbol + opt.lang_char
-        os.makedirs(f'./saved_models/{opt.experiment_name}', exist_ok=True)
+        os.makedirs(f'./saved_models/{experiment_name}', exist_ok=True)
         return opt
 
-    opt = get_config(config_file)
+    opt = get_config(config_file, experiment_name, training_data)
     console = Console()
 
     opt.experiment_name = experiment_name
