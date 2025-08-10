@@ -216,8 +216,11 @@ def training(
     opt.sensitive = sensitive
     console.print(opt)
 
-    with open(f'./saved_models/{experiment_name}/config.yaml', 'w', encoding="utf8") as stream:
-        yaml.dump(opt.to_dict(), stream, allow_unicode=True)
+    # AttrDict has no to_dict method; convert directly to a plain dict for YAML dumping
+    config_path = f'./saved_models/{experiment_name}/config.yaml'
+    with open(config_path, 'w', encoding="utf8") as stream:
+        yaml.safe_dump(dict(opt), stream, allow_unicode=True, sort_keys=False)
+    console.print(f"[green]Saved config to[/green] {config_path}")
     train(opt, amp=amp)
 
 if __name__ == "__main__":
