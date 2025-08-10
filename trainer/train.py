@@ -197,7 +197,11 @@ def train(opt, show_number = 2, amp=False):
     scaler = GradScaler()
     t1= time.time()
         
-    # Timing accumulators (per validation interval)
+    # Simple logging config
+    simple_mode = getattr(opt, 'simple_log', True)
+    log_interval = getattr(opt, 'log_interval', 50)
+
+    # Timing accumulators (per validation interval) - only used if not simple_mode
     interval_data_time = 0.0
     interval_forward_time = 0.0
     interval_backward_time = 0.0
@@ -214,7 +218,8 @@ def train(opt, show_number = 2, amp=False):
         t_data_start = time.time()
         image_tensors, labels = train_dataset.get_batch()
         data_time = time.time() - t_data_start
-        interval_data_time += data_time
+        if not simple_mode:
+            interval_data_time += data_time
         image = image_tensors.to(device)
         text, length = converter.encode(labels, batch_max_length=opt.batch_max_length)
         batch_size = image.size(0)
@@ -235,7 +240,8 @@ def train(opt, show_number = 2, amp=False):
                 target = text[:, 1:]  # without [GO] Symbol
                 cost = criterion(preds.view(-1, preds.shape[-1]), target.contiguous().view(-1))
         fwd_time = time.time() - t_fwd_start
-        interval_forward_time += fwd_time
+        if not simple_mode:
+            interval_forward_time += fwd_time
 
         # ---------------- Backward ----------------
         t_bwd_start = time.time()
@@ -247,7 +253,8 @@ def train(opt, show_number = 2, amp=False):
             cost.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)
         bwd_time = time.time() - t_bwd_start
-        interval_backward_time += bwd_time
+        if not simple_mode:
+            interval_backward_time += bwd_time
 
         # ---------------- Optimizer Step ----------------
         t_opt_start = time.time()
@@ -257,29 +264,45 @@ def train(opt, show_number = 2, amp=False):
         else:
             optimizer.step()
         opt_time = time.time() - t_opt_start
-        interval_opt_step_time += opt_time
+        if not simple_mode:
+            interval_opt_step_time += opt_time
 
         iter_time = time.time() - iter_start
-        interval_iter_time += iter_time
+        if not simple_mode:
+            interval_iter_time += iter_time
+        
+        # Simple per-iteration concise log
+        if simple_mode and (i % log_interval == 0 or i == start_iter):
+            if torch.cuda.is_available():
+                mem_alloc = torch.cuda.memory_allocated() / 1024**2
+                mem_txt = f" | GPU {mem_alloc:0.0f}MB"
+            else:
+                mem_txt = ''
+            console.log(
+                f"[{i}/{opt.num_iter}] loss={loss_avg.val():.4f} "
+                f"step={iter_time*1000:0.1f}ms (data {data_time*1000:0.1f} fwd {fwd_time*1000:0.1f} bwd {bwd_time*1000:0.1f} opt {opt_time*1000:0.1f})" + mem_txt
+            )
         
         loss_avg.add(cost)
 
         # validation part
         if (i % opt.valInterval == 0) and (i!=0):
-            interval_wall = time.time() - interval_start_time
-            console.log(f"[magenta]Interval {last_log_iter}->{i}[/magenta] time: {interval_wall:0.2f}s | "
-                        f"iter_avg={interval_iter_time/(i-last_log_iter):0.3f}s (data {interval_data_time/(i-last_log_iter):0.3f} | "
-                        f"fwd {interval_forward_time/(i-last_log_iter):0.3f} | bwd {interval_backward_time/(i-last_log_iter):0.3f} | opt {interval_opt_step_time/(i-last_log_iter):0.3f}) | "
-                        f"throughput={( (i-last_log_iter)*batch_size )/interval_wall:0.1f} samples/s")
-            if torch.cuda.is_available():
-                mem_alloc = torch.cuda.memory_allocated() / 1024**2
-                mem_reserved = torch.cuda.memory_reserved() / 1024**2
-                console.log(f"GPU Memory Allocated: {mem_alloc:0.1f}MB | Reserved: {mem_reserved:0.1f}MB")
-
-            # reset interval timers
-            interval_data_time = interval_forward_time = interval_backward_time = interval_opt_step_time = interval_iter_time = 0.0
-            interval_start_time = time.time()
-            last_log_iter = i
+            if not simple_mode:
+                interval_wall = time.time() - interval_start_time
+                console.log(
+                    f"[magenta]Interval {last_log_iter}->{i}[/magenta] time: {interval_wall:0.2f}s | "
+                    f"iter_avg={interval_iter_time/(i-last_log_iter):0.3f}s (data {interval_data_time/(i-last_log_iter):0.3f} | "
+                    f"fwd {interval_forward_time/(i-last_log_iter):0.3f} | bwd {interval_backward_time/(i-last_log_iter):0.3f} | opt {interval_opt_step_time/(i-last_log_iter):0.3f}) | "
+                    f"throughput={( (i-last_log_iter)*batch_size )/interval_wall:0.1f} samples/s"
+                )
+                if torch.cuda.is_available():
+                    mem_alloc = torch.cuda.memory_allocated() / 1024**2
+                    mem_reserved = torch.cuda.memory_reserved() / 1024**2
+                    console.log(f"GPU Memory Allocated: {mem_alloc:0.1f}MB | Reserved: {mem_reserved:0.1f}MB")
+                # reset interval timers
+                interval_data_time = interval_forward_time = interval_backward_time = interval_opt_step_time = interval_iter_time = 0.0
+                interval_start_time = time.time()
+                last_log_iter = i
             console.log('training time: ' + f"{time.time()-t1:0.2f}s")
             t1=time.time()
             elapsed_time = time.time() - start_time
