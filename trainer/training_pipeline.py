@@ -170,8 +170,11 @@ def training(
     Run training using the specified config file.
 
     example:
-    python perfomance_load.py training --config config_files/th_custom_config.yaml --experiment-name th_filtered_2gpus --train-data all_data/<dataset> --amp
-    python perfomance_load.py training -c config_files/th_custom_config.yaml -e <experiment_name> -t all_data/<dataset> -a
+    python training_pipeline.py training --config config_files/th_custom_config.yaml --experiment-name th_filtered_2gpus --train-data all_data/<dataset> --lr 0.001 --batch-max-length 34 --workers 16 --batch-size 32 --num-iter 10000 --val-interval 100 --FT --img-height 64 --img-width 600 --sensitive --amp
+    python training_pipeline.py training -c config_files/th_custom_config.yaml -e <experiment_name> -t all_data/<dataset> -l 0.001 -b 34 -w 16 -bs 32 -ni 10000 -vi 100 -ft -ih 64 -iw 600 -s -a
+
+    example-full:
+    python training_pipeline.py training --config config_files/th_custom_config.yaml --experiment-name my_experiment --train-data all_data/my_dataset --lr 0.001 --batch-max-length 34 --workers 16 --batch-size 32 --num-iter 10000 --val-interval 100 --FT --img-height 64 --img-width 600 --sensitive --amp
     """
     print("GPU list: ", os.environ.get("CUDA_VISIBLE_DEVICES", "Not set"))
 
@@ -212,7 +215,6 @@ def training(
     opt.FT = FT
     opt.sensitive = sensitive
     console.print(opt)
-
 
     with open(f'./saved_models/{experiment_name}/config.yaml', 'w', encoding="utf8") as stream:
         yaml.dump(opt.to_dict(), stream, allow_unicode=True)
